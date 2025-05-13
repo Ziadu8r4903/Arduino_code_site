@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+  <head>
+
+        <meta charset="UTF-8">
+
+    <title>AR Code</title>
+
+    <meta name="description"content ="this is my book store page">
+
+    </head>
+
+<body>
+
+    <h1>
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Arduino Code Display</title>
+          <style>
+            body {
+              background-color: #1e1e1e;
+              color: #d4d4d4;
+              font-family: 'Courier New', monospace;
+              padding: 20px;
+            }
+            pre {
+              background-color: #2d2d2d;
+              padding: 20px;
+              border-radius: 8px;
+              overflow-x: auto;
+              white-space: pre-wrap;
+              line-height: 1.5;
+            }
+          </style>
+        </head>
+        <body>
+          <h1>Arduino  Code</h1>
+          <pre><code>
+        #include &lt;Dabble.h&gt;
+        
+        #define ENA 3
+        #define IN1 4
+        #define IN2 5
+        #define ENB 6
+        #define IN3 8
+        #define IN4 7
+        
+        #define IR_RIGHT A0
+        #define IR_MIDDLE A1
+        #define IR_LEFT A2
+        
+        #define TRIG_PIN A3
+        #define ECHO_PIN A4
+        
+        #define SWITCH_SENSOR 13
+        #define SWITCH_BLUETOOTH 12
+        
+        const int NUM_READINGS = 10;
+        long readings[NUM_READINGS];
+        int readIndex = 0;
+        long total = 0;
+        long averageDistance = 0;
+        
+        void setup() {
+          Serial.begin(9600);
+          Dabble.begin(Serial);
+        
+          pinMode(ENA, OUTPUT);
+          pinMode(IN1, OUTPUT);
+          pinMode(IN2, OUTPUT);
+          pinMode(ENB, OUTPUT);
+          pinMode(IN3, OUTPUT);
+          pinMode(IN4, OUTPUT);
+        
+          pinMode(IR_RIGHT, INPUT);
+          pinMode(IR_MIDDLE, INPUT);
+          pinMode(IR_LEFT, INPUT);
+        
+          pinMode(TRIG_PIN, OUTPUT);
+          pinMode(ECHO_PIN, INPUT);
+        
+          pinMode(SWITCH_SENSOR, INPUT_PULLUP);
+          pinMode(SWITCH_BLUETOOTH, INPUT_PULLUP);
+        
+          for (int i = 0; i < NUM_READINGS; i++) {
+            readings[i] = 0;
+          }
+        }
+        
+        long readDistance() {
+          digitalWrite(TRIG_PIN, LOW);
+          delayMicroseconds(2);
+          digitalWrite(TRIG_PIN, HIGH);
+          delayMicroseconds(10);
+          digitalWrite(TRIG_PIN, LOW);
+          long duration = pulseIn(ECHO_PIN, HIGH, 30000);
+          if (duration == 0) return 300;
+          return duration * 0.034 / 2;
+        }
+        
+        void moveForward(int speedVal) {
+          analogWrite(ENA, speedVal);
+          digitalWrite(IN1, HIGH);
+          digitalWrite(IN2, LOW);
+          analogWrite(ENB, speedVal);
+          digitalWrite(IN3, HIGH);
+          digitalWrite(IN4, LOW);
+        }
+        
+        void moveBackward() {
+          analogWrite(ENA, 80);
+          digitalWrite(IN1, LOW);
+          digitalWrite(IN2, HIGH);
+          analogWrite(ENB, 80);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, HIGH);
+        }
+        
+        void stopMotors() {
+          analogWrite(ENA, 0);
+          analogWrite(ENB, 0);
+          digitalWrite(IN1, LOW);
+          digitalWrite(IN2, LOW);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, LOW);
+        }
+        
+        void turnLeftForward(int speedVal) {
+          analogWrite(ENA, speedVal);
+          digitalWrite(IN1, LOW);
+          digitalWrite(IN2, HIGH);
+          analogWrite(ENB, speedVal);
+          digitalWrite(IN3, HIGH);
+          digitalWrite(IN4, LOW);
+        }
+        
+        void turnRightForward(int speedVal) {
+          analogWrite(ENA, speedVal);
+          digitalWrite(IN1, HIGH);
+          digitalWrite(IN2, LOW);
+          analogWrite(ENB, speedVal);
+          digitalWrite(IN3, LOW);
+          digitalWrite(IN4, HIGH);
+        }
+        
+        void bluetoothControl() {
+          Dabble.processInput();
+          if (GamePad.isUpPressed()) {
+            moveForward(100);
+          } else if (GamePad.isDownPressed()) {
+            moveBackward();
+          } else if (GamePad.isLeftPressed()) {
+            turnRightForward(100);
+          } else if (GamePad.isRightPressed()) {
+            turnLeftForward(100);
+          } else {
+            stopMotors();
+          }
+        }
+        
+        void sensorControl() {
+          long newReading = readDistance();
+          total = total - readings[readIndex];
+          readings[readIndex] = newReading;
+          total = total + readings[readIndex];
+          readIndex = (readIndex + 1) % NUM_READINGS;
+          averageDistance = total / NUM_READINGS;
+        
+          int irRight = digitalRead(IR_RIGHT);
+          int irMiddle = digitalRead(IR_MIDDLE);
+          int irLeft = digitalRead(IR_LEFT);
+        
+          if (averageDistance < 12) {
+            moveBackward();
+          } else if (averageDistance > 18) {
+            if (irLeft == 0) {
+              turnLeftForward(120);
+            } else if (irRight == 0) {
+              turnRightForward(120);
+            } else if (irMiddle == 0) {
+              moveForward(80);
+            } else {
+              stopMotors();
+            }
+          } else {
+            stopMotors();
+          }
+        }
+        
+        void loop() {
+          bool sensorMode = digitalRead(SWITCH_SENSOR) == LOW;
+          bool bluetoothMode = digitalRead(SWITCH_BLUETOOTH) == LOW;
+        
+          if (sensorMode) {
+            sensorControl();
+          } else if (bluetoothMode) {
+            bluetoothControl();
+          } else {
+            stopMotors();
+          }
+        
+          delay(50);
+        }
+          </code></pre>
+        </body>
+        </html>
+
+
+
+        
+    </h1>
+    <i></i>
+    
+</body>
